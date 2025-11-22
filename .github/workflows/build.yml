@@ -12,21 +12,25 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-
-    - name: Setup Android SDK
+    - name: Setup Java and Android
       uses: android-actions/setup-android@v3
       with:
-        api-level: 34
-        build-tools: 34.0.0
+        packages: |
+          platforms;android-33
+          build-tools;33.0.0
+          platform-tools
+          tools
+        cmdline-tools-version: 7.0
 
-    - name: Download and setup Gradle
+    - name: Install Gradle and Build
       run: |
-        # Скачиваем Gradle напрямую
-        wget https://services.gradle.org/distributions/gradle-8.0-bin.zip
-        unzip -q gradle-8.0-bin.zip
-        echo "GRADLE_HOME=$PWD/gradle-8.0"
+        wget -q https://services.gradle.org/distributions/gradle-7.5-bin.zip
+        unzip -q gradle-7.5-bin.zip
+        ./gradle-7.5/bin/gradle clean assembleDebug
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: calculator-apk
+        path: app/build/outputs/apk/debug/app-debug.apk
+        retention-days: 30
