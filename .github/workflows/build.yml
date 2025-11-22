@@ -3,8 +3,6 @@ name: Build Android APK
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
   build:
@@ -22,11 +20,16 @@ jobs:
 
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
+      with:
+        api-level: 34
+        build-tools: 34.0.0
+        cmake: 3.22.1
+        ndk: 25.1.8937393
 
-    - name: Build APK
+    - name: Build APK with detailed output
       run: |
         chmod +x ./gradlew
-        ./gradlew assembleDebug
+        ./gradlew clean assembleDebug --warning-mode all --stacktrace --info
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
