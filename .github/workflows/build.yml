@@ -12,21 +12,46 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Setup Java and Android
-      uses: android-actions/setup-android@v3
+    - name: Setup Java
+      uses: actions/setup-java@v4
       with:
-        packages: |
-          platforms;android-33
-          build-tools;33.0.0
-          platform-tools
-          tools
-        cmdline-tools-version: 7.0
+        java-version: '11'
+        distribution: 'temurin'
 
-    - name: Install Gradle and Build
+    - name: Install Android SDK and Build Tools
       run: |
+        # Создаем директорию для Android SDK
+        mkdir -p /usr/local/lib/android/sdk
+        
+        # Скачиваем Command Line Tools (актуальная версия)
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+        unzip -q commandlinetools-linux-9477386_latest.zip
+        
+        # Создаем правильную структуру папок
+        mkdir -p /usr/local/lib/android/sdk/cmdline-tools/latest
+        mv cmdline-tools/* /usr/local/lib/android/sdk/cmdline-tools/latest/
+        
+        # Очищаем временные файлы
+        rm -rf cmdline-tools commandlinetools-linux-9477386_latest.zip
+        
+        # Устанавливаем переменные окружения
+        echo "ANDROID_SDK_ROOT=/usr/local/lib/android/sdk" >> $GITHUB_ENV
+        echo "PATH=/usr/local/lib/android/sdk/cmdline-tools/latest/bin:/usr/local/lib/android/sdk/platform-tools:$PATH" >> $GITHUB_ENV
+        
+        # Принимаем лицензии
+        yes | sdkmanager --licenses
+        
+        # Устанавливаем платформу и build-tools
+        sdkmanager "platforms;android-33" "build-tools;33.0.0" "platform-tools"
+
+    - name: Build APK with Gradle
+      run: |
+        # Скачиваем и устанавливаем Gradle
         wget -q https://services.gradle.org/distributions/gradle-7.5-bin.zip
         unzip -q gradle-7.5-bin.zip
-        ./gradle-7.5/bin/gradle clean assembleDebug
+        
+        # Собираем APK
+        ./gradle-7.5/bin/gradle clean assembleDebug --stacktrace
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
